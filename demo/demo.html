@@ -1,0 +1,50 @@
+﻿<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="zh">
+<head>
+
+    <meta name="renderer" content="webkit">
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge,chrome=1">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+    <title>省市区县联动下拉jquery插件</title>
+    <script type="text/javascript" src="../jquery.js"></script>
+    <script type="text/javascript" src="districtdata.js"></script> <!-- 省市区\县数据，注意是比较老的数据了 -->
+    <script type="text/javascript" src="districtselector.js"></script>
+
+    <style type="text/css">
+
+    </style>
+</head>
+<body>
+<label>选择地址：</label>
+<select id="province" name="province" class='form-control'></select>
+
+<select id="city" name="city" class='form-control'></select>
+
+<select id="area" name="area" class='form-control'></select>
+
+<script type="text/javascript">
+
+    $(function () {
+
+        var districtSelector = $.buildDistrictSelector({
+            provinceId: 'province',
+            cityId: 'city',
+            areaId: 'area',
+            ajaxMethod: {
+                url: "http://kmos.kingmed.com.cn/km-ws/administrativeDivisionService/list", sendData: null, responseHandler: function (data) {
+                    return data;
+                }
+            }
+        });
+        districtSelector.initSelectedCodes('110000', '110100', null); // 初始化数据，注意传的是code
+
+    })
+
+</script>
+
+</body>
+</html>
+
+
+
+
