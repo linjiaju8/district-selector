@@ -7,156 +7,120 @@
     'use strict';
 
     var $document = $(window.document);
-    var _this;
-    var $province;
-    var $city;
-    var $area;
+    var rootDistrictCode = "1"; // 根行政区划ID，即所有省份的根节点的ID，虚拟的
 
     var DistrictSelector = function (opt) {
-        this.defaults = {
+        var defaults = {
             provinceId: "",
             cityId: "",
             areaId: "",
-            emptyText:"请选择",
-            provinceCallBack: null,
-            cityCallBack: null,
-            areaCallBack: null,
-            ajaxMethod: {
+            provinceCode: null,
+            cityCode: null,
+            areaCode: null,
+            emptyText: "请选择",
+            onLoadSuccess: null,
+            ajaxConfig: {
                 url: null,
-                sendData: null,
-                responseHandler: function (data) {
-                    return data;
+                responseDataTemplate: {
+                    // 插件默认使用的服务端返回数据格式是：{districtCode:'地区编码',districtName:'地区名称'}，如果不是此格式可通过此配置定制
+                    // e.g：如果我使用的是regionCode和regionName可以使用如下代码转换districtCode: "regionCode",districtName: "regionName"
+                    districtCode: "districtCode",
+                    districtName: "districtName"
                 }
             }
         };
-        this.options = $.extend({}, this.defaults, opt);
-        $province = $('#' + this.options.provinceId);
-        $city = $('#' + this.options.cityId);
-        $area = $('#' + this.options.areaId);
-        _this = this;
-        bindingData();
+        this.options = $.extend({}, defaults, opt);
+        if (!this.options.ajaxConfig.url) {
+            // 如果没有传入url时使用默认数据
+            initLocalDistrictData(this);
+        }
+        bindingEvent(this);
+        buildSubDistricts(this, $('#' + this.options.provinceId), rootDistrictCode, true);
     };
 
     DistrictSelector.prototype = {
-        initSelectedCodes: function (provinceCode, cityCode, areaCode) {
-            if (provinceCode && provinceCode != 'unknown') {
-                var $province = $('#' + this.options.provinceId);
-                $province.val(provinceCode);
-                $province.change();
-                if (cityCode && cityCode != 'unknown') {
-                    var $city = $('#' + this.options.cityId);
-                    $city.val(cityCode);
-                    $city.change();
-                    if (areaCode && areaCode != 'unknown') {
-                        $('#' + this.options.areaId).val(areaCode);
-                    }
+        getEmptyHtml: function () {
+            return "<option value=''>" + this.options.emptyText + "</option>";
+        }
+    };
+
+    var initSelectedCodes = function (_this) {
+        var $province = $('#' + _this.options.provinceId);
+        if (_this.options.provinceCode && _this.options.provinceCode != 'unknown') {
+            $province.val(_this.options.provinceCode);
+            $province.change();
+            var $city = $('#' + _this.options.cityId);
+            if (_this.options.cityCode && _this.options.cityCode != 'unknown') {
+                $city.val(_this.options.cityCode);
+                $city.change();
+                if (_this.options.areaCode && _this.options.areaCode != 'unknown') {
+                    $('#' + _this.options.areaId).val(_this.options.areaCode);
                 }
             }
         }
     };
 
-    var init = function () {
+    var initLocalDistrictData = function (_this) {
+        for (var districtCode in DistrictSelectorData) {
+            if (DistrictSelectorData.hasOwnProperty(districtCode)) {
+                var districtData = DistrictSelectorData[districtCode];
+                var districtName = districtData[0];
+                var parentDistrictCode = districtData[1];
+                var $option = $("<option value='" + districtCode + "'>" + districtName + "</option>");
+                var oldDataHtml = $($document).data(parentDistrictCode) ? $($document).data(parentDistrictCode) : [$(_this.getEmptyHtml())];
+                oldDataHtml.push($option);
+                $option.data(districtCode, districtData);
+                $document.data(parentDistrictCode, oldDataHtml); // 直接存option的html代码
+            }
+        }
+    };
+
+    var bindingEvent = function (_this) {
         var $province = $('#' + _this.options.provinceId);
         var $city = $('#' + _this.options.cityId);
         var $area = $('#' + _this.options.areaId);
-        bindingData($province, $city, $area);
-        bindingEvent($province, $city, $area);
-    };
-
-    var bindingData = function () {
-        var emptyHtml = "<option value=''>"+_this.options.emptyText+"</option>";
-        $province.append(emptyHtml);
-        $city.append(emptyHtml);
-        $area.append(emptyHtml);
-        var districtCode;
-        var districtName;
-        var parentDistrictCode;
-        var $opt;
-
-        // 初始化省份数据
-        var provinceData;
-        if (_this.options.ajaxMethod.url) {
-            $.getJSON(_this.options.ajaxMethod.url, _this.options.ajaxMethod.sendData, function (data) {
-                var provinceData = _this.options.ajaxMethod.responseHandler(data);
-                if (provinceData && provinceData.length && provinceData.length > 0) {
-                    for (var i = 0; i < provinceData.length; i++) {
-                        districtCode = provinceData[i].administrativeDivisionId;
-                        districtName = provinceData[i].name;
-                        pDistrictCode = provinceData[i].parentId;
-                        $opt = $("<option value='" + districtCode + "'>" + districtName + "</option>");
-                        // 根节点,即省份数据
-                        $province.append($opt);
-                        $opt.data(districtCode, provinceData[i]);
-                    }
-                    if ($.isFunction(_this.options.provinceCallBack)) {
-                        // 省份数据初始化后回调
-                        _this.options.provinceCallBack(provinceData);
-                    }
-                }
-            });
-        } else {
-            provinceData = DistrictSelectorData;
-            for (var k in provinceData) {
-                districtCode = k;
-                districtName = provinceData[k][0];
-                parentDistrictCode = provinceData[k][1];
-                $opt = $("<option value='" + districtCode + "'>" + districtName + "</option>");
-                if (parentDistrictCode == "1") {
-                    // 根节点,即省份数据
-                    $province.append($opt);
-                } else {
-                    var oldData = $($document).data(pDistrictCode) ? $($document).data(pDistrictCode) : [$(emptyOpt)];
-                    oldData.push($opt);
-                    $document.data(pDistrictCode, oldData);
-                }
-            }
-        }
-    };
-
-    var bindingEvent = function ($province, $city, $area) {
         $province.change(function () {
-            // 初始化地市前先清理区县数据
-            $area.empty();
-            $area.append(emptyOpt);
             // 地市
-            buildSubDistricts($city, $(this).val(), "2");
+            $city.html(_this.getEmptyHtml());
+            $area.html(_this.getEmptyHtml());
+            buildSubDistricts(_this, $city, $(this).find('option:selected'));
         });
         $city.change(function () {
             // 区县
-            buildSubDistricts($area, $(this).val(), "3");
+            $area.html(_this.getEmptyHtml());
+            buildSubDistricts(_this, $area, $(this).find('option:selected'));
         });
     };
 
-    var buildSubDistricts = function ($subDistricts, parentDistrictCode) {
-        var $subDistrictsData;
-        var emptyHtml = "<option value=''>"+_this.options.emptyText+"</option>";
-        if (_this.options.ajaxMethod.url) {
-            $subDistricts.empty();
-            $subDistricts.append(emptyHtml);
-            $.getJSON(_this.options.ajaxMethod.url, _this.options.ajaxMethod.sendData, function (data) {
-                $subDistrictsData = _this.options.ajaxMethod.responseHandler(data);
-                if ($subDistrictsData && $subDistrictsData.length && $subDistrictsData.length > 0) {
-                    for (var i = 0; i < $subDistrictsData.length; i++) {
-                        var districtCode = $subDistrictsData[i].administrativeDivisionId;
-                        var districtName = $subDistrictsData[i].name;
-                        var $opt = $("<option value='" + districtCode + "'>" + districtName + "</option>");
-                        // 根节点,即省份数据
-                        $subDistricts.append($opt);
-                        $opt.data(districtCode, $subDistrictsData[i]);
-                    }
-                    if (level == "2" && $.isFunction(_this.options.cityCallBack)) {
-                        // 地市数据初始化后回调
-                        _this.options.cityCallBack($subDistrictsData);
-                    }
-                    if (level == "3" && $.isFunction(_this.options.areaCallBack)) {
-                        // 区县数据初始化后回调
-                        _this.options.areaCallBack($subDistrictsData);
-                    }
-                }
+    var buildSubDistricts = function (_this, $districts, $parentDistrictOption, initTag) {
+        if (_this.options.ajaxConfig.url) {
+            $districts.html(_this.getEmptyHtml());
+            var sendData = $parentDistrictOption == rootDistrictCode ? null : $parentDistrictOption.data($parentDistrictOption.val());
+            $.getJSON(_this.options.ajaxConfig.url, sendData, function (data) {
+                $.each(data, function () {
+                    var districtCode = this[_this.options.ajaxConfig.responseDataTemplate.districtCode];
+                    var districtName = this[_this.options.ajaxConfig.responseDataTemplate.districtName];
+                    var $option = $("<option value='" + districtCode + "'>" + districtName + "</option>");
+                    $districts.append($option);
+                    $option.data(districtCode, this);
+                });
+                afterInitData(_this, $districts, initTag);
             });
         } else {
-            $subDistrictsData = $document.data(parentId) ? $document.data(parentId) : emptyOpt;
-            $subDistricts.html($subDistrictsData);
+            var $parentDistrictCode = $parentDistrictOption == rootDistrictCode ? rootDistrictCode : $parentDistrictOption.val();
+            var $subDistrictsHtml = $document.data($parentDistrictCode) ? $document.data($parentDistrictCode) : _this.getEmptyHtml();
+            $districts.html($subDistrictsHtml);
+            afterInitData(_this, $districts, initTag);
+        }
+    };
+
+    var afterInitData = function (_this, $districts, initTag) {
+        $districts.val("");
+        if ($.isFunction(_this.options.onLoadSuccess)) {
+            _this.options.onLoadSuccess($districts);
+        }
+        if (initTag) {
+            initSelectedCodes(_this);
         }
     };
 

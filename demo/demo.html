@@ -6,38 +6,64 @@
     <meta http-equiv="X-UA-Compatible" content="IE=Edge,chrome=1">
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
     <title>省市区县联动下拉jquery插件</title>
-    <script type="text/javascript" src="../jquery.js"></script>
-    <script type="text/javascript" src="districtdata.js"></script> <!-- 省市区\县数据，注意是比较老的数据了 -->
-    <script type="text/javascript" src="districtselector.js"></script>
+    <script type="text/javascript" src="../jquery.district-selector/jquery.js"></script>
+    <script type="text/javascript" src="../jquery.district-selector/districtdata.js"></script>
+    <script type="text/javascript" src="../jquery.district-selector/jquery.district-selector.js"></script>
 
     <style type="text/css">
 
     </style>
 </head>
 <body>
-<label>选择地址：</label>
-<select id="province" name="province" class='form-control'></select>
+<label>本地数据省市区联动：</label>
+<select id="localProvince" title="本地数据省份"></select>
 
-<select id="city" name="city" class='form-control'></select>
+<select id="localCity" title="本地数据地市"></select>
 
-<select id="area" name="area" class='form-control'></select>
+<select id="localArea" title="本地数据区县"></select>
+<br/><br/>
+<label>远程数据省市区联动：</label>
+<select id="remoteProvince" title="远程数据省份"></select>
+
+<select id="remoteCity" title="远程数据地市"></select>
+
+<select id="remoteArea" title="远程数据区县"></select>
 
 <script type="text/javascript">
 
     $(function () {
-
-        var districtSelector = $.buildDistrictSelector({
-            provinceId: 'province',
-            cityId: 'city',
-            areaId: 'area',
-            ajaxMethod: {
-                url: "http://kmos.kingmed.com.cn/km-ws/administrativeDivisionService/list", sendData: null, responseHandler: function (data) {
-                    return data;
+        var DistrictSelector = $.initDistrictSelector({
+            provinceId: 'localProvince',
+            cityId: 'localCity',
+            areaId: 'localArea',
+            provinceCode: "110000",
+            cityCode: "110100",
+            onLoadSuccess: function ($district) {
+                if (window.console) {
+                    window.console.log("当前加载数据的对象：", $district);
                 }
             }
         });
-        districtSelector.initSelectedCodes('110000', '110100', null); // 初始化数据，注意传的是code
 
+        /*$.initDistrictSelector({
+            provinceId: 'remoteProvince',
+            cityId: 'remoteCity',
+            areaId: 'remoteArea',
+            provinceCode: "110000",
+            cityCode: "110100",
+            ajaxConfig: {
+                url: "http://localhost:8080/km-ws/administrativeDivisionService/list",
+                responseDataTemplate: {
+                    districtCode: "administrativeDivisionId",
+                    districtName: "name"
+                }
+            },
+            onLoadSuccess: function ($district) {
+                if (window.console) {
+                    window.console.log("当前加载数据的对象：", $district);
+                }
+            }
+        });*/
     })
 
 </script>
