@@ -1,0 +1,76 @@
+﻿<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="zh">
+<head>
+
+    <meta name="renderer" content="webkit">
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge,chrome=1">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+    <title>省市区县联动下拉jquery插件</title>
+    <script type="text/javascript" src="../jquery.js"></script>
+    <script type="text/javascript" src="../jquery.district-selector/districtdata.js"></script>
+    <script type="text/javascript" src="../jquery.district-selector/jquery.district-selector.js"></script>
+
+    <style type="text/css">
+
+    </style>
+</head>
+<body>
+<label>本地数据省市区联动：</label>
+<select id="localProvince" title="本地数据省份"></select>
+
+<select id="localCity" title="本地数据地市"></select>
+
+<select id="localArea" title="本地数据区县"></select>
+<br/><br/>
+<label>远程数据省市区联动：</label>
+<select id="remoteProvince" title="远程数据省份"></select>
+
+<select id="remoteCity" title="远程数据地市"></select>
+
+<select id="remoteArea" title="远程数据区县"></select>
+
+<script type="text/javascript">
+
+    $(function () {
+        var DistrictSelector = $.initDistrictSelector({
+            provinceId: 'localProvince',
+            cityId: 'localCity',
+            areaId: 'localArea',
+            provinceCode: "110000",
+            cityCode: "110100",
+            onLoadSuccess: function ($district) {
+                if (window.console) {
+                    window.console.log("当前加载数据的对象：", $district);
+                }
+            }
+        });
+
+        $.initDistrictSelector({
+            provinceId: 'remoteProvince',
+            cityId: 'remoteCity',
+            areaId: 'remoteArea',
+            provinceCode: "110000",
+            cityCode: "110100",
+            ajaxConfig: {
+                url: "http://localhost:8080/km-ws/administrativeDivisionService/list",
+                responseDataTemplate: {
+                    districtCode: "administrativeDivisionId",
+                    districtName: "name"
+                }
+            },
+            onLoadSuccess: function ($district) {
+                if (window.console) {
+                    window.console.log("当前加载数据的对象：", $district);
+                }
+            }
+        });
+    })
+
+</script>
+
+</body>
+</html>
+
+
+
+
