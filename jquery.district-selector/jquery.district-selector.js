@@ -11,16 +11,17 @@
 
     var DistrictSelector = function (opt) {
         var defaults = {
-            provinceId: "",
-            cityId: "",
-            areaId: "",
-            provinceCode: null,
-            cityCode: null,
-            areaCode: null,
-            emptyText: "请选择",
-            onLoadSuccess: null,
+            provinceId: "", // 省份下拉框ID
+            cityId: "", // 地市下拉框ID
+            areaId: "", // 区县下拉框ID
+            provinceCode: null, // 默认要初始化的省份的code
+            cityCode: null, // 默认要初始化的地市的code
+            areaCode: null, // 默认要初始化的区县的code
+            emptyText: "请选择", // 空选项提示
+            onLoadSuccess: null, // 初始化完成后执行
             ajaxConfig: {
-                url: null,
+                // 使用ajax远程数据时配置
+                url: null, // 远程数据地址
                 responseDataTemplate: {
                     // 插件默认使用的服务端返回数据格式是：{districtCode:'地区编码',districtName:'地区名称'}，如果不是此格式可通过此配置定制
                     // e.g：如果我使用的是regionCode和regionName可以使用如下代码转换districtCode: "regionCode",districtName: "regionName"
